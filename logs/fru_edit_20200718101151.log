@@ -1,0 +1,13 @@
+2020-07-18T10:11:51 [INFO] config | Logger initialized with file logs\fru_edit_20200718101151.log
+2020-07-18T10:12:11 [INFO] mainpage | Begin set Chassis Part Number : 
+2020-07-18T10:12:11 [INFO] mainpage | Running E:\python_pycharm\fru_edit_v2\tools\win64\ipmitool-1.8.18-lan\ipmitool.exe fru edit 0 field c 0 '            '
+2020-07-18T10:12:11 [ERROR] mainpage | b'No hostname specified!\n'
+2020-07-18T10:12:11 [ERROR] mainpage | Chassis Part Number flash fail ...
+2020-07-18T10:13:01 [INFO] mainpage | Begin set Chassis Part Number : sdfdas
+2020-07-18T10:13:01 [INFO] mainpage | Running E:\python_pycharm\fru_edit_v2\tools\win64\ipmitool-1.8.18-lan\ipmitool.exe fru edit 0 field c 0 'sdfdas      '
+2020-07-18T10:13:02 [ERROR] mainpage | b'No hostname specified!\n'
+2020-07-18T10:13:02 [ERROR] mainpage | Chassis Part Number flash fail ...
+2020-07-18T10:15:04 [INFO] mainpage | E:\python_pycharm\fru_edit_v2\tools\win64\ipmitool-1.8.18-lan\ipmitool.exefru list 0
+2020-07-18T10:15:04 [INFO] mainpage | 'E:\python_pycharm\fru_edit_v2\tools\win64\ipmitool-1.8.18-lan\ipmitool.exefru' is not recognized as an internal or external command,
+operable program or batch file.
+2020-07-18T10:15:04 [ERROR] mainpage | Get fru fail !!!
