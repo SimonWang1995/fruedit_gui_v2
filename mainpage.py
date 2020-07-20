@@ -9,6 +9,7 @@ import os, json
 class MainPage:
     def __init__(self, master, config, ipmi, extraflag=False):
         self.root = master
+        self.root.resizable(0, 0)
         self.cfg = config
         self.root.geometry("%dx%d" % (400, 500))
         self.ipmi = ipmi
@@ -17,6 +18,7 @@ class MainPage:
         self.result = dict()
         self.__entrylist = list()
         self.creatpage()
+        self.get_items()
 
     def creatpage(self):
         self.mpage = Frame(self.root)
@@ -62,7 +64,8 @@ class MainPage:
             text = value + (length - len(value)) * " "
             cmd = "%s fru edit 0 field %s %s '%s'" % (self.ipmi, field, index, text)
             self.cfg.logger.info("Running " + cmd)
-            res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            res = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
             stdout, stderr = res.communicate()
             if flag:
                 if stderr:
@@ -103,23 +106,29 @@ class MainPage:
             showinfo(title="Pass", message="Flash successful, Check detail result from logs/result.log")
 
     def getfru(self):
-        self.cfg.logger.info(self.ipmi+"fru list 0")
-        status, output = subprocess.getstatusoutput(self.ipmi+"fru list 0")
-        self.cfg.logger.info(output)
-        if status != 0:
-            self.cfg.logger.error("Get fru fail !!!")
-            raise RuntimeError("Get fru fail !!!")
+        cmd = self.ipmi+"fru list 0"
+        self.cfg.logger.info(cmd)
+        subpro = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+        stdout, stderr = subpro.communicate()
+        if not subpro.returncode:
+            self.cfg.logger.info(stdout)
+            fru = stdout.decode('utf-8')
+            return fru
         else:
-            return output
+            self.cfg.logger.error(stderr)
+            raise RuntimeError("Get Fru fail !!")
 
     def get_items(self):
         try:
             fruinfo = self.getfru()
-            row = 0
-            for line in fruinfo:
-                if not line.strip():
-                    name, value = line.split(':')
-                    self.__entrylist[row].set(value.strip())
+            # print(fruinfo)
+            row = 1
+            for line in fruinfo.split('\n'):
+                # print("line: "+line)
+                if line:
+                    value = line.split(':', 1)[1].strip()
+                    self.__entrylist[row].set(value)
                     row += 1
         except RuntimeError as e:
             showerror(message=str(e))
@@ -127,19 +136,48 @@ class MainPage:
     def readbin(self):
         file = asksaveasfilename()
         if file:
-            stat, output = subprocess.getstatusoutput(self.ipmi + "fru read 0 %s" % file)
-            if stat != 0:
+            cmd = self.ipmi + "fru read 0 %s" % file
+            self.cfg.logger.info("Running : " + cmd)
+            subpro = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+            stdout, stderr = subpro.communicate()
+            if subpro.returncode:
+                self.cfg.logger.error(stderr)
                 showerror(message="Read fru bin fail")
 
     def writebin(self):
         file = askopenfilename()
         if file:
-            stat, output = subprocess.getstatusoutput(self.ipmi + "fru write 0 %s" % file)
-            if stat != 0:
+            cmd = self.ipmi + "fru write 0 %s" % file
+            self.cfg.logger.info("Running : " + cmd)
+            subpro = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+            stdout, stderr = subpro.communicate()
+            if subpro.returncode:
+                self.cfg.logger.error(stderr)
                 showerror(message="Write fru bin fail")
 
     def recovery(self):
-        pass
+        self.cfg.logger.info("Begin recovery fru ......")
+        self.recovery = self.cfg.recovery.copy()
+        if self.extraflag:
+            self.recovery.pop()
+            self.recovery.pop()
+        for addr, value in self.recovery.items():
+            cmd = "%s %s %s %s" % (self.ipmi, self.cfg.fru_write_command, addr, value)
+            self.cfg.logger.info("Running command: %s " % cmd)
+            try:
+                subpro = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE)
+                stdout, stderr = subpro.communicate()
+                if not subpro.returncode:
+                    self.cfg.logger.info(stdout)
+                else:
+                    self.cfg.logger.error(stderr)
+                    raise RuntimeError("Excute command %s ----- [ Fail ]" % cmd)
+            except Exception as e:
+                self.cfg.logger.error(str(e))
+                showwarning("Recovery fru fail!!!")
 
 if __name__ == '__main__':
     from config import Setting

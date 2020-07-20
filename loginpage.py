@@ -7,6 +7,7 @@ from mainpage import MainPage
 class LoginPage(object):
     def __init__(self, master=None, config=None):
         self.root = master  # 定义内部变量root
+        self.root.resizable(0, 0)
         self.cfg = config
         self.root.geometry('%dx%d' % (300, 180))  # 设置窗口大小
         self.ipaddr = StringVar()
@@ -37,7 +38,7 @@ class LoginPage(object):
             showinfo(title="Error", message=str(e))
             return False
         self.cfg.logger.info("Running ping -n 1 %s" % ipaddr)
-        if not os.system("ping -n 1 %s" % ipaddr):
+        if not subprocess.call("ping -n 1 %s" % ipaddr):
             return True
         else:
             self.cfg.logger.warning("Ping %s fail, Please check it!" % ipaddr)
@@ -53,22 +54,30 @@ class LoginPage(object):
             if not name or not secret:
                 self.cfg.logger.warning("用户名或密码为空")
                 showinfo(title="Warning", message="用户名或密码为空")
-            elif not os.system(self.tool+" -H %s -U %s -P %s raw 6 1" % (ipaddr, name, secret)):
+            elif not subprocess.call(self.tool+" -H %s -U %s -P %s raw 6 1" % (ipaddr, name, secret)):
                 self.ipmi = self.tool+" -H %s -U %s -P %s " % (ipaddr, name, secret)
                 self.cfg.logger.info(self.ipmi)
                 # try:
-                self.cfg.logger.info(self.ipmi + "fru list 0")
-                status, output = subprocess.getstatusoutput(self.ipmi + "fru list 0")
-                self.cfg.logger.info(output)
-                if status == 0:
-                    if re.search("Pruduct Extra", output):
+                cmd = self.ipmi + "fru list 0"
+                self.cfg.logger.info(cmd)
+                try:
+                    subpro = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout, stderr = subpro.communicate()
+                    if not subpro.returncode:
+                        self.cfg.logger.info(stdout)
                         self.page.destroy()
-                        MainPage(self.root, self.cfg, self.ipmi, True)
+                        if re.search("Pruduct Extra", stdout.decode('gbk')):
+                            self.extraflag = True
+                        else:
+                            self.extraflag = False
                     else:
-                        MainPage(self.root, self.cfg, self.ipmi, False)
+                        self.cfg.logger.error(stderr)
+                        self.cfg.logger.error("Get fru fail")
+                        showwarning(message="Get fru fail!!")
+                except Exception as e:
+                    showinfo(message=str(e))
                 else:
-                    self.cfg.logger.error("Get fru fail")
-                    showwarning(message="Get fru fail!!")
+                    MainPage(self.root, self.cfg, self.ipmi, self.extraflag)
             else:
                 showinfo(title="Warning", message="BMC over lan fail, Please check it!")
 

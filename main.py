@@ -5,7 +5,7 @@ from config import Setting
 
 root = Tk()
 root.title("Fru edit")
-root.iconbitmap("")
+root.iconbitmap(r".\tools\fru.ico")
 config = Setting()
 LoginPage(root, config)
 root.mainloop()
