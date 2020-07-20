@@ -11,7 +11,7 @@ class MainPage:
         self.root = master
         self.root.resizable(0, 0)
         self.cfg = config
-        self.root.geometry("%dx%d" % (400, 500))
+        self.root.geometry("%dx%d" % (400, 540))
         self.ipmi = ipmi
         self.extraflag = extraflag
         self.labellist = self.cfg.labellist
@@ -160,7 +160,7 @@ class MainPage:
     def recovery(self):
         self.cfg.logger.info("Begin recovery fru ......")
         self.recovery = self.cfg.recovery.copy()
-        if self.extraflag:
+        if not self.extraflag:
             self.recovery.pop()
             self.recovery.pop()
         for addr, value in self.recovery.items():

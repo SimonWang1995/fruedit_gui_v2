@@ -66,7 +66,7 @@ class LoginPage(object):
                     if not subpro.returncode:
                         self.cfg.logger.info(stdout)
                         self.page.destroy()
-                        if re.search("Pruduct Extra", stdout.decode('gbk')):
+                        if re.search("Product Extra", stdout.decode('utf-8')):
                             self.extraflag = True
                         else:
                             self.extraflag = False
@@ -77,6 +77,7 @@ class LoginPage(object):
                 except Exception as e:
                     showinfo(message=str(e))
                 else:
+                    print(self.extraflag)
                     MainPage(self.root, self.cfg, self.ipmi, self.extraflag)
             else:
                 showinfo(title="Warning", message="BMC over lan fail, Please check it!")
